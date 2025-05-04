@@ -939,6 +939,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet* scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->complex_hvs > 1) {
+        SVT_ERROR("Complex-hvs must be between 0 and 1\n");
+        return_error = EB_ErrorBadParameter;
+    }
+
     return return_error;
 }
 
@@ -1115,8 +1120,9 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration* config_ptr) {
     config_ptr->alt_lambda_factors                = 1;
     config_ptr->sharp_tx                          = 1;
     config_ptr->alt_ssim_tuning                   = false;
-    config_ptr->tx_bias                           = 0;    return return_error;
-}
+    config_ptr->tx_bias                           = 0;
+    config_ptr->complex_hvs                       = 0;
+    return return_error;}
 
 static const char* tier_to_str(unsigned in) {
     if (!in) {
@@ -2363,7 +2369,9 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration* config_
         {"noise-norm-strength", &config_struct->noise_norm_strength},
         {"kf-tf-strength", &config_struct->kf_tf_strength},
         {"sharp-tx", &config_struct->sharp_tx},
-        {"tx-bias", &config_struct->tx_bias},    };
+        {"tx-bias", &config_struct->tx_bias},
+        {"complex-hvs", &config_struct->complex_hvs},
+    };
 
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

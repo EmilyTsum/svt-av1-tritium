@@ -225,7 +225,7 @@
 #define SHARP_TX_TOKEN "--sharp-tx"
 #define ALT_SSIM_TUNING_TOKEN "--alt-ssim-tuning"
 #define TX_BIAS_TOKEN "--tx-bias"
-static EbErrorType validate_error(EbErrorType err, const char* token, const char* value) {
+#define COMPLEX_HVS_TOKEN "--complex-hvs"static EbErrorType validate_error(EbErrorType err, const char* token, const char* value) {
     switch (err) {
     case EB_ErrorNone:
         return EB_ErrorNone;
@@ -1108,8 +1108,10 @@ ConfigDescription config_entry_psychovisual[] = {
     {ALT_SSIM_TUNING_TOKEN, "Alternative SSIM tuning methods for tune 2, default is 0 [0-1]"},
     // TX bias
     {TX_BIAS_TOKEN,
-     "Transform size/type bias type, default is 0 [0-3]; 1 = full, 2, transform size only, 3 = interpolation only"},    // Termination
-    {NULL, NULL}};
+     "Transform size/type bias type, default is 0 [0-3]; 1 = full, 2, transform size only, 3 = interpolation only"},
+    //Complex HVS
+    {COMPLEX_HVS_TOKEN, "Enable highest complexity HVS model, default is 0 [0-1]"},
+    // Termination    {NULL, NULL}};
 
 ConfigEntry config_entry[] = {
     // Options
@@ -1347,8 +1349,12 @@ ConfigEntry config_entry[] = {
     {ALT_SSIM_TUNING_TOKEN, "AltSSIMTuning", set_cfg_generic_token},
 
     // TX bias
-    {TX_BIAS_TOKEN, "TxBias", set_cfg_generic_token},    // Termination
-    {NULL, NULL, NULL}};
+    {TX_BIAS_TOKEN, "TxBias", set_cfg_generic_token},
+
+    // Complex HVS
+    {COMPLEX_HVS_TOKEN, "ComplexHVS", set_cfg_generic_token},
+
+    // Termination    {NULL, NULL, NULL}};
 
 /**********************************
  * Constructor
