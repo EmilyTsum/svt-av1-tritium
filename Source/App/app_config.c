@@ -225,8 +225,10 @@
 #define SHARP_TX_TOKEN "--sharp-tx"
 #define ALT_SSIM_TUNING_TOKEN "--alt-ssim-tuning"
 #define TX_BIAS_TOKEN "--tx-bias"
-#define COMPLEX_HVS_TOKEN "--complex-hvs"static EbErrorType validate_error(EbErrorType err, const char* token, const char* value) {
-    switch (err) {
+#define COMPLEX_HVS_TOKEN "--complex-hvs"
+#define NOISE_ADAPTIVE_FILTERING_TOKEN "--noise-adaptive-filtering"
+
+static EbErrorType validate_error(EbErrorType err, const char* token, const char* value) {    switch (err) {
     case EB_ErrorNone:
         return EB_ErrorNone;
     default:
@@ -1111,8 +1113,12 @@ ConfigDescription config_entry_psychovisual[] = {
      "Transform size/type bias type, default is 0 [0-3]; 1 = full, 2, transform size only, 3 = interpolation only"},
     //Complex HVS
     {COMPLEX_HVS_TOKEN, "Enable highest complexity HVS model, default is 0 [0-1]"},
-    // Termination    {NULL, NULL}};
-
+    // Noise adaptive filtering
+    {NOISE_ADAPTIVE_FILTERING_TOKEN,
+     "Control noise detection for CDEF/restoration filtering, default is 2 [0: off, 1: both CDEF and restoration are "
+     "on 2: default tune behavior, 3: CDEF only, 4: restoration only)]"},
+    // Termination
+    {NULL, NULL}};
 ConfigEntry config_entry[] = {
     // Options
     {INPUT_FILE_TOKEN, "InputFile", set_cfg_input_file},
@@ -1354,8 +1360,11 @@ ConfigEntry config_entry[] = {
     // Complex HVS
     {COMPLEX_HVS_TOKEN, "ComplexHVS", set_cfg_generic_token},
 
-    // Termination    {NULL, NULL, NULL}};
+    // Noise adaptive filtering
+    {NOISE_ADAPTIVE_FILTERING_TOKEN, "NoiseAdaptiveFiltering", set_cfg_generic_token},
 
+    // Termination
+    {NULL, NULL, NULL}};
 /**********************************
  * Constructor
  **********************************/
