@@ -217,11 +217,12 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Min value is -3.
      * Max value is 13.
-     * Default is 12.
+     * Default is 4.
      *
      * When PRESET_CHANGE_EVENT is used to change the preset on the fly, this
      * value is served as minimum possible preset value. The actual preset value
      * is stored in pcs->enc_mode.
+>>>>>>> 5678b51e6 (Set default preset to 4)
      */
     int8_t enc_mode;
 
