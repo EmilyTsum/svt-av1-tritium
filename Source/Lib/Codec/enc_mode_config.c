@@ -1495,9 +1495,9 @@ static void dlf_level_modulation(PictureControlSet* pcs, uint8_t* default_dlf_le
     if (modulation_mode == 2 || modulation_mode == 3) {
         if (dlf_level > 4) {
             if (pcs->ref_skip_percentage > 95) {
-                dlf_level = dlf_level >= 6 ? 0 : dlf_level + 2;
+                dlf_level = 7;
             } else if (pcs->ref_skip_percentage > 75) {
-                dlf_level = dlf_level == 7 ? 0 : dlf_level + 1;
+                dlf_level = MIN(7, dlf_level + 1);
             }
         }
     }
@@ -1523,17 +1523,13 @@ static uint8_t get_dlf_level_default(PictureControlSet* pcs, EncMode enc_mode, u
             dlf_level       = is_not_last_layer ? 3 : 6;
             modulation_mode = 3;
         } else if (enc_mode <= ENC_M9) {
-            dlf_level       = is_not_last_layer ? 6 : 0;
+            dlf_level       = is_not_last_layer ? 6 : 7;
             modulation_mode = 3;
         } else if (enc_mode <= ENC_M11) {
-            if (pcs->coeff_lvl == HIGH_LVL) {
-                dlf_level = is_base ? 6 : 0;
-            } else {
-                dlf_level = is_base ? 6 : is_not_last_layer ? 7 : 0;
-            }
+            dlf_level       = is_base ? 6 : 7;
             modulation_mode = 3;
         } else {
-            dlf_level       = 0;
+            dlf_level       = 7;
             modulation_mode = 3;
         }
     } else { // fast-decode 2
@@ -1561,18 +1557,31 @@ static uint8_t get_dlf_level_default(PictureControlSet* pcs, EncMode enc_mode, u
 static uint8_t get_dlf_level_rtc(PictureControlSet* pcs, EncMode enc_mode, int is_base) {
     uint8_t dlf_level       = 0;
     uint8_t modulation_mode = 0; // 0: off, 1: only towards bd-rate, 2: both sides; , 3: only towards speed
-    if (enc_mode <= ENC_M7) {
-        dlf_level       = 3;
-        modulation_mode = 1;
-    } else if (enc_mode <= ENC_M9) {
-        dlf_level       = 6;
-        modulation_mode = 3;
-    } else if (enc_mode <= ENC_M10) {
-        dlf_level       = 7;
-        modulation_mode = 3;
+    const bool use_flat_ipp       = pcs->ppcs->hierarchical_levels == 0; // rtc path, so rtc is true
+    const bool is_not_last_layer  = !pcs->ppcs->is_highest_layer;
+
+    if (use_flat_ipp) {
+        if (enc_mode <= ENC_M9) {
+            dlf_level       = 6;
+            modulation_mode = 3;
+        } else if (enc_mode <= ENC_M10) {
+            dlf_level       = is_not_last_layer ? 6 : 7;
+            modulation_mode = 3;
+        } else {
+            dlf_level       = 0;
+            modulation_mode = 3;
+        }
     } else {
-        dlf_level       = 0;
-        modulation_mode = 3;
+        if (enc_mode <= ENC_M7) {
+            dlf_level       = 6;
+            modulation_mode = 3;
+        } else if (enc_mode <= ENC_M9) {
+            dlf_level       = is_not_last_layer ? 6 : 7;
+            modulation_mode = 3;
+        } else {
+            dlf_level       = 7;
+            modulation_mode = 3;
+        }
     }
     if (!is_base) {
         dlf_level_modulation(pcs, &dlf_level, modulation_mode);
