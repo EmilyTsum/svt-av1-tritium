@@ -1208,6 +1208,14 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t alt_cdef;
 
     /**
+     * @brief Enable alternative DLF biases
+     * 0: disabled
+     * 1-3: enabled
+     * Default is 0
+     */
+    uint8_t alt_dlf;
+
+    /**
      * @brief Enable Daala distortion metric.
      * 0 = OFF
      * 1 = CDEF
@@ -1240,7 +1248,7 @@ typedef struct EbSvtAv1EncConfiguration {
         - sizeof(bool) // enable_intrabc
         - sizeof(uint8_t) // max_managed_refs (ref-frame mgmt)
         /* SVT-AV1-HDR additions */
-        - (sizeof(uint8_t) * 12) - (sizeof(int8_t) * 1) - (sizeof(int32_t) * 2) - (sizeof(bool) * 6) - (sizeof(double)) -
+        - (sizeof(uint8_t) * 13) - (sizeof(int8_t) * 1) - (sizeof(int32_t) * 2) - (sizeof(bool) * 6) - (sizeof(double)) -
         sizeof(char*) - sizeof(SvtAv1QualityZone*) - sizeof(uint16_t)];
     // clang-format on
 } EbSvtAv1EncConfiguration;
