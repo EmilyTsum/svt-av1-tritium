@@ -654,7 +654,19 @@ static void derive_intra_coeff_level(PictureControlSet* pcs) {
 }
 
 static void derive_inter_coeff_level(PictureControlSet* pcs) {
-    uint64_t cmplx               = pcs->ppcs->norm_me_dist / MAX(1, pcs->scs->static_config.qp);
+    // Derive the input nois level
+    EbPictureBufferDesc* input_pic = pcs->ppcs->enhanced_pic;
+
+    EbByte y_buffer = input_pic->y_buffer;
+
+    int32_t noise_level_fp16 = svt_estimate_noise_fp16(y_buffer, // Y
+                                                       input_pic->width,
+                                                       input_pic->height,
+                                                       input_pic->y_stride);
+
+    noise_level_fp16             = svt_aom_noise_log1p_fp16(noise_level_fp16);
+    const uint8_t effective_qp   = svt_av1_get_effective_qp(pcs->scs, pcs->ppcs->picture_number).qp;
+    uint64_t cmplx               = pcs->ppcs->norm_me_dist / MAX(1, effective_qp);
     uint64_t coeff_vlow_level_th = COEFF_LVL_INTER_TH_0;
     uint64_t coeff_low_level_th  = COEFF_LVL_INTER_TH_1;
     uint64_t coeff_high_level_th = COEFF_LVL_INTER_TH_2;
@@ -969,8 +981,22 @@ EbErrorType svt_aom_mode_decision_configuration_kernel_iter(void* context) {
 
             MeshPattern* mesh_patterns = intraBC_ctrls->mesh_patterns;
 
-            for (int i = 0; i < MAX_MESH_STEP; i++) {
-                mesh_patterns[i].range = DIVIDE_AND_ROUND(mesh_patterns[i].range * q_weight, q_weight_denom);
+            // Initialize search sites for diamond/3-step search for intra-Bc
+            svt_av1_init3smotion_compensation(&pcs->ss_cfg, pcs->ppcs->enhanced_pic->y_stride);
+
+            if (intraBC_ctrls->mesh_qp_scaling) {
+                // QP-scaled thresholds
+                uint32_t q_weight, q_weight_denom;
+                svt_aom_get_qp_based_th_scaling_factors(pcs->scs->qp_based_th_scaling_ctrls.intra_bc_mesh_qp_scaling,
+                                                        &q_weight,
+                                                        &q_weight_denom,
+                                                        svt_av1_get_effective_qp(pcs->scs, pcs->ppcs->picture_number).qp);
+
+                MeshPattern* mesh_patterns = intraBC_ctrls->mesh_patterns;
+
+                for (int i = 0; i < MAX_MESH_STEP; i++) {
+                    mesh_patterns[i].range = DIVIDE_AND_ROUND(mesh_patterns[i].range * q_weight, q_weight_denom);
+                }
             }
         }
     }
