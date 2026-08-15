@@ -1,6 +1,9 @@
 name: pgo-build
-on: workflow_dispatch
-# on: push # testing only
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - pgo-test
 
 jobs:
   build-windows-x86-64:
