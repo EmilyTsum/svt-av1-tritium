@@ -223,7 +223,9 @@ static int exhaustive_mesh_search(IntraBcContext* x, Mv* ref_mv, Mv* best_mv, in
 
     clamp_mv(&fcenter_mv, x->mv_limits.col_min, x->mv_limits.col_max, x->mv_limits.row_min, x->mv_limits.row_max);
     *best_mv = fcenter_mv;
-    best_sad = fn_ptr->sdf(what->buf, what->stride, get_buf_from_mv(in_what, &fcenter_mv), in_what->stride) +
+    const uint8_t* const ref_center =
+        in_what->buf + fcenter_mv.y * in_what->stride + fcenter_mv.x;
+    best_sad = fn_ptr->sdf(what->buf, what->stride, ref_center, in_what->stride) +
         mvsad_err_cost(x, &fcenter_mv, ref_mv, sad_per_bit);
     start_row = AOMMAX(-range, x->mv_limits.row_min - fcenter_mv.y);
     start_col = AOMMAX(-range, x->mv_limits.col_min - fcenter_mv.x);
@@ -231,11 +233,12 @@ static int exhaustive_mesh_search(IntraBcContext* x, Mv* ref_mv, Mv* best_mv, in
     end_col   = AOMMIN(range, x->mv_limits.col_max - fcenter_mv.x);
 
     for (r = start_row; r <= end_row; r += step) {
+        const uint8_t* const ref_row = ref_center + r * in_what->stride;
         for (c = start_col; c <= end_col; c += col_step) {
             // Step > 1 means we are not checking every location in this pass.
             if (step > 1) {
                 const Mv     mv  = {{fcenter_mv.x + c, fcenter_mv.y + r}};
-                unsigned int sad = fn_ptr->sdf(what->buf, what->stride, get_buf_from_mv(in_what, &mv), in_what->stride);
+                unsigned int sad = fn_ptr->sdf(what->buf, what->stride, ref_row + c, in_what->stride);
                 if (sad < best_sad) {
                     sad += mvsad_err_cost(x, &mv, ref_mv, sad_per_bit);
                     if (sad < best_sad) {
@@ -247,12 +250,9 @@ static int exhaustive_mesh_search(IntraBcContext* x, Mv* ref_mv, Mv* best_mv, in
             } else {
                 // 4 sads in a single call if we are checking every location
                 if (c + 3 <= end_col) {
-                    unsigned int   sads[4];
-                    const uint8_t* addrs[4];
-                    for (i = 0; i < 4; ++i) {
-                        const Mv mv = {{fcenter_mv.x + c + i, fcenter_mv.y + r}};
-                        addrs[i]    = get_buf_from_mv(in_what, &mv);
-                    }
+                    unsigned int       sads[4];
+                    const uint8_t* const ref_base = ref_row + c;
+                    const uint8_t* const addrs[4] = {ref_base, ref_base + 1, ref_base + 2, ref_base + 3};
                     fn_ptr->sdx4df(what->buf, what->stride, addrs, in_what->stride, sads);
 
                     for (i = 0; i < 4; ++i) {
@@ -269,8 +269,8 @@ static int exhaustive_mesh_search(IntraBcContext* x, Mv* ref_mv, Mv* best_mv, in
                 } else {
                     for (i = 0; i < end_col - c; ++i) {
                         const Mv     mv  = {{fcenter_mv.x + c + i, fcenter_mv.y + r}};
-                        unsigned int sad = fn_ptr->sdf(
-                            what->buf, what->stride, get_buf_from_mv(in_what, &mv), in_what->stride);
+                        unsigned int sad =
+                            fn_ptr->sdf(what->buf, what->stride, ref_row + c + i, in_what->stride);
                         if (sad < best_sad) {
                             sad += mvsad_err_cost(x, &mv, ref_mv, sad_per_bit);
                             if (sad < best_sad) {
