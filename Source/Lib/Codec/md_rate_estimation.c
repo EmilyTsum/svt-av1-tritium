@@ -391,6 +391,13 @@ static void build_nmv_component_cost_table(int32_t* mvcost, const NmvComponent* 
     int32_t bits_cost[MV_OFFSET_BITS][2];
     int32_t class0_fp_cost[CLASS0_SIZE][MV_FP_SIZE], fp_cost[MV_FP_SIZE];
     int32_t class0_hp_cost[2], hp_cost[2];
+    int32_t bit_pattern_cost[1 << MV_OFFSET_BITS];
+    int32_t bit_pattern_bits = 0;
+
+    // Expand the binary MV offset costs only when entering a larger MV class.
+    // A 10-bit table needs 2 + 4 + ... + 1024 = 2046 updates per component,
+    // replacing the per-MV inner loop (up to 10 additions for every MV value).
+    bit_pattern_cost[0] = 0;
 
     svt_aom_get_syntax_rate_from_cdf(sign_cost, mvcomp->sign_cdf, NULL);
     svt_aom_get_syntax_rate_from_cdf(class_cost, mvcomp->classes_cdf, NULL);
@@ -420,9 +427,17 @@ static void build_nmv_component_cost_table(int32_t* mvcost, const NmvComponent* 
             cost += class0_cost[d];
         } else {
             const int32_t b = c + CLASS0_BITS - 1; /* number of bits */
-            for (i = 0; i < b; ++i) {
-                cost += bits_cost[i][((d >> i) & 1)];
+            while (bit_pattern_bits < b) {
+                const int32_t pattern_count = 1 << bit_pattern_bits;
+                for (i = 0; i < pattern_count; ++i) {
+                    const int32_t previous_cost = bit_pattern_cost[i];
+                    bit_pattern_cost[i] = previous_cost + bits_cost[bit_pattern_bits][0];
+                    bit_pattern_cost[i + pattern_count] = previous_cost + bits_cost[bit_pattern_bits][1];
+                }
+                ++bit_pattern_bits;
             }
+            assert(d < (1 << bit_pattern_bits));
+            cost += bit_pattern_cost[d];
         }
         if (precision > MV_SUBPEL_NONE) {
             if (c == MV_CLASS_0) {
