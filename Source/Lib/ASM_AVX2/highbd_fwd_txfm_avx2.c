@@ -3887,8 +3887,6 @@ static INLINE void fwd_txfm2d_32x32_avx2(const int16_t* input, int32_t* output, 
 
 void svt_av1_fwd_txfm2d_32x32_avx2(int16_t* input, int32_t* output, uint32_t stride, TxType tx_type, uint8_t bd) {
     DECLARE_ALIGNED(32, int32_t, txfm_buf[1024]);
-    Txfm2dFlipCfg cfg;
-    svt_aom_transform_config(tx_type, TX_32X32, &cfg);
     (void)bd;
 
     if (tx_type == DCT_DCT) {
@@ -3897,14 +3895,16 @@ void svt_av1_fwd_txfm2d_32x32_avx2(int16_t* input, int32_t* output, uint32_t str
 
         load_buffer_32x32_avx2(input, buf_256, stride);
         av1_round_shift_array_32_avx2(buf_256, out_256, 128, -2);
-        fdct32x32_avx2(out_256, buf_256, cfg.cos_bit_col, cfg.stage_range_col);
+        fdct32x32_avx2(out_256, buf_256, 12, NULL);
         av1_round_shift_array_32_avx2(buf_256, out_256, 128, 4);
         transpose_32_avx2(32, out_256, buf_256);
-        fdct32x32_avx2(buf_256, buf_256, cfg.cos_bit_row, cfg.stage_range_row);
+        fdct32x32_avx2(buf_256, buf_256, 12, NULL);
         transpose_32_avx2(32, buf_256, out_256);
         return;
     }
 
+    Txfm2dFlipCfg cfg;
+    svt_aom_transform_config(tx_type, TX_32X32, &cfg);
     fwd_txfm2d_32x32_avx2(input, output, stride, &cfg, txfm_buf);
 }
 
@@ -3950,8 +3950,6 @@ void svt_av1_fwd_txfm2d_64x64_avx2(int16_t* input, int32_t* output, uint32_t str
     (void)bd;
     __m256i       in[512];
     __m256i*      out     = (__m256i*)output;
-    const int32_t txw_idx = tx_size_wide_log2[TX_64X64] - tx_size_wide_log2[0];
-    const int32_t txh_idx = tx_size_high_log2[TX_64X64] - tx_size_high_log2[0];
 
     switch (tx_type) {
     case IDTX:
@@ -3967,12 +3965,12 @@ void svt_av1_fwd_txfm2d_64x64_avx2(int16_t* input, int32_t* output, uint32_t str
         break;
     case DCT_DCT:
         load_buffer_64x64_avx2(input, stride, out);
-        fdct64x64_avx2(out, in, fwd_cos_bit_col[txw_idx][txh_idx]);
+        fdct64x64_avx2(out, in, 13);
         av1_round_shift_array_32_avx2(in, out, 512, 2);
         transpose_8nx8n(out, in, 64, 64);
 
         /*row wise transform*/
-        fdct64x64_avx2(in, out, fwd_cos_bit_row[txw_idx][txh_idx]);
+        fdct64x64_avx2(in, out, 10);
         av1_round_shift_array_32_avx2(out, in, 512, 2);
         transpose_8nx8n(in, out, 64, 64);
         break;
