@@ -498,30 +498,42 @@ void svt_av1_predict_intra_block(MacroBlockD* xd, BlockSize bsize, TxSize tx_siz
     // force 4x4 chroma component block size.
     bsize = svt_aom_scale_chroma_bsize(bsize, ss_x, ss_y);
 
-    const int32_t have_top_right   = svt_aom_intra_has_top_right(seq_header_ptr->sb_size,
-                                                               bsize,
-                                                               mi_row,
-                                                               mi_col,
-                                                               have_top,
-                                                               right_available,
-                                                               partition,
-                                                               tx_size,
-                                                               row_off,
-                                                               col_off,
-                                                               ss_x,
-                                                               ss_y);
-    const int32_t have_bottom_left = svt_aom_intra_has_bottom_left(seq_header_ptr->sb_size,
-                                                                   bsize,
-                                                                   mi_row,
-                                                                   mi_col,
-                                                                   bottom_available,
-                                                                   have_left,
-                                                                   partition,
-                                                                   tx_size,
-                                                                   row_off,
-                                                                   col_off,
-                                                                   ss_x,
-                                                                   ss_y);
+    const int32_t is_dr_mode       = av1_is_directional_mode(mode);
+    const int32_t use_filter_intra = filter_intra_mode != FILTER_INTRA_MODES;
+    const int32_t p_angle          = is_dr_mode ? mode_to_angle_map[mode] + angle_delta * ANGLE_STEP : 0;
+    const int32_t need_top_right   = !use_filter_intra &&
+        (is_dr_mode ? p_angle < 90 : !!(extend_modes[mode] & NEED_ABOVERIGHT));
+    const int32_t need_bottom_left = !use_filter_intra &&
+        (is_dr_mode ? p_angle > 180 : !!(extend_modes[mode] & NEED_BOTTOMLEFT));
+
+    const int32_t have_top_right = need_top_right
+        ? svt_aom_intra_has_top_right(seq_header_ptr->sb_size,
+                                      bsize,
+                                      mi_row,
+                                      mi_col,
+                                      have_top,
+                                      right_available,
+                                      partition,
+                                      tx_size,
+                                      row_off,
+                                      col_off,
+                                      ss_x,
+                                      ss_y)
+        : 0;
+    const int32_t have_bottom_left = need_bottom_left
+        ? svt_aom_intra_has_bottom_left(seq_header_ptr->sb_size,
+                                        bsize,
+                                        mi_row,
+                                        mi_col,
+                                        bottom_available,
+                                        have_left,
+                                        partition,
+                                        tx_size,
+                                        row_off,
+                                        col_off,
+                                        ss_x,
+                                        ss_y)
+        : 0;
 
     const int32_t disable_edge_filter = !(seq_header_ptr->enable_intra_edge_filter);
 
