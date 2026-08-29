@@ -136,9 +136,10 @@ static INLINE int svt_av1_is_subpelmv_in_range(const SubpelMvLimits* mv_limits, 
 // JOINT_MV, and comp_cost covers the cost of transmitting the actual motion
 // vector.
 static INLINE int svt_mv_cost(const Mv* mv, const int* joint_cost, const int* const comp_cost[2]) {
+    // MV_JOINT_* is encoded as horizontal-nonzero bit 0, vertical-nonzero bit 1.
+    const MvJointType joint = (MvJointType)((mv->x != 0) | ((mv->y != 0) << 1));
     // The y-component (row component) of the MV is coded first, so the cost is in the 0th idx
-    return joint_cost[svt_av1_get_mv_joint(mv)] + comp_cost[0][CLIP3(MV_LOW, MV_UPP, mv->y)] +
-        comp_cost[1][CLIP3(MV_LOW, MV_UPP, mv->x)];
+    return joint_cost[joint] + comp_cost[0][CLIP3(MV_LOW, MV_UPP, mv->y)] + comp_cost[1][CLIP3(MV_LOW, MV_UPP, mv->x)];
 }
 
 #ifdef __cplusplus
