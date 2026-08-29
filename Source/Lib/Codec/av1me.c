@@ -149,7 +149,7 @@ int svt_aom_mv_err_cost(const Mv* mv, const Mv* ref, const int* mvjcost, const i
     return 0;
 }
 
-static int mvsad_err_cost(const IntraBcContext* x, const Mv* mv, const Mv* ref, int sad_per_bit) {
+static INLINE int mvsad_err_cost(const IntraBcContext* x, const Mv* mv, const Mv* ref, int sad_per_bit) {
     if (x->approx_inter_rate) {
         return mvsad_err_cost_light(mv, ref);
     }
