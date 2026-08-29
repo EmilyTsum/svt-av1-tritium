@@ -1740,7 +1740,7 @@ uint8_t svt_aom_quantize_inv_quantize(PictureControlSet* pcs, ModeDecisionContex
             &candidate_plane, &qparam, (TranLow*)coeff, quant_coeff, (TranLow*)recon_coeff, txsize, tx_type, eob, pcs);
     }
 
-    if (!ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx) {
+    if (!ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx || *eob == 0) {
         return 0;
     }
 
