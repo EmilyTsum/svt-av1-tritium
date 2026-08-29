@@ -37,7 +37,9 @@ static INLINE int32_t av1_cost_symbol(AomCdfProb p15) {
     p15 = (AomCdfProb)clamp(p15, 1, CDF_PROB_TOP - 1);
     assert(0 < p15 && p15 < CDF_PROB_TOP);
     const int32_t shift = CDF_PROB_BITS - 1 - get_msb(p15);
-    const int32_t prob  = get_prob(p15 << shift, CDF_PROB_TOP);
+    // CDF_PROB_TOP is 2^15, so get_prob(num, CDF_PROB_TOP) reduces to
+    // a rounded divide by 128 after normalizing p15.
+    const int32_t prob = AOMMIN(255, ((p15 << shift) + 64) >> 7);
     assert(prob >= 128);
     return av1_prob_cost[prob - 128] + av1_cost_literal(shift);
 }
