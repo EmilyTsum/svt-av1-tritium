@@ -754,12 +754,12 @@ static AOM_FORCE_INLINE void update_coeff_eob(int* accu_rate, int64_t* accu_dist
                                               TranLow* dqcoeff, uint8_t* levels, int sharpness, const QmVal* iqm_ptr) {
     assert(si != *eob - 1);
     const int     ci        = scan[si];
-    const int     dqv       = get_dqv(dequant, ci, iqm_ptr);
     const TranLow qc        = qcoeff[ci];
     const int     coeff_ctx = get_lower_levels_ctx(levels, ci, bwl, tx_size, tx_class);
     if (qc == 0) {
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
     } else {
+        const int     dqv         = get_dqv(dequant, ci, iqm_ptr);
         int           lower_level = 0;
         const TranLow abs_qc      = abs(qc);
         const TranLow tqc         = tcoeff[ci];
@@ -854,13 +854,13 @@ static INLINE void update_coeff_general(int* accu_rate, int64_t* accu_dist, int 
                                         const LvMapCoeffCost* txb_costs, const TranLow* tcoeff, TranLow* qcoeff,
                                         TranLow* dqcoeff, uint8_t* levels, const QmVal* iqm_ptr) {
     const int     ci        = scan[si];
-    const int     dqv       = get_dqv(dequant, ci, iqm_ptr);
     const TranLow qc        = qcoeff[ci];
     const int     is_last   = si == (eob - 1);
     const int     coeff_ctx = get_lower_levels_ctx_general(is_last, si, bwl, height, levels, ci, tx_size, tx_class);
     if (qc == 0) {
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
     } else {
+        const int     dqv    = get_dqv(dequant, ci, iqm_ptr);
         const int     sign   = (qc < 0) ? 1 : 0;
         const TranLow abs_qc = abs(qc);
         const TranLow tqc    = tcoeff[ci];
@@ -906,7 +906,6 @@ static AOM_FORCE_INLINE void update_coeff_simple(int* accu_rate, int si, int eob
                                                  const int16_t* scan, const LvMapCoeffCost* txb_costs,
                                                  const TranLow* tcoeff, TranLow* qcoeff, TranLow* dqcoeff,
                                                  uint8_t* levels, const QmVal* iqm_ptr) {
-    const int dqv = get_dqv(dequant, scan[si], iqm_ptr);
     (void)eob;
     // this simple version assumes the coeff's scan_idx is not DC (scan_idx != 0)
     // and not the last (scan_idx != eob - 1)
@@ -918,6 +917,7 @@ static AOM_FORCE_INLINE void update_coeff_simple(int* accu_rate, int si, int eob
     if (qc == 0) {
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
     } else {
+        const int     dqv      = get_dqv(dequant, ci, iqm_ptr);
         const TranLow abs_qc   = abs(qc);
         const TranLow abs_tqc  = abs(tcoeff[ci]);
         const TranLow abs_dqc  = abs(dqcoeff[ci]);
