@@ -724,8 +724,7 @@ typedef void (*svt_ext_all_sad_calculation_8x8_16x16_fn)(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
     uint32_t mv, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
     uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
-    uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8],
-    bool sub_sad);
+    uint32_t p_eight_sad16x16[16][8], bool sub_sad);
 
 typedef std::tuple<TestPattern, SADPattern,
                    svt_ext_all_sad_calculation_8x8_16x16_fn>
@@ -769,11 +768,9 @@ class Allsad8x8_CalculationTest
             uint32_t best_sad16x16[2][16];
             uint32_t best_mv16x16[2][16] = {{0}};
             uint32_t eight_sad16x16[2][16][8];
-            uint32_t eight_sad8x8[2][64][8];
             fill_buf_with_value(&best_sad8x8[0][0], 2 * 64, BEST_SAD_MAX);
             fill_buf_with_value(&best_sad16x16[0][0], 2 * 16, UINT_MAX);
             fill_buf_with_value(&eight_sad16x16[0][0][0], 2 * 16 * 8, UINT_MAX);
-            fill_buf_with_value(&eight_sad8x8[0][0][0], 2 * 64 * 8, UINT_MAX);
 
             prepare_data();
 
@@ -787,7 +784,6 @@ class Allsad8x8_CalculationTest
                                                     best_mv8x8[0],
                                                     best_mv16x16[0],
                                                     eight_sad16x16[0],
-                                                    eight_sad8x8[0],
                                                     sub_sad);
 
             test_func_(src_aligned_,
@@ -800,7 +796,6 @@ class Allsad8x8_CalculationTest
                        best_mv8x8[1],
                        best_mv16x16[1],
                        eight_sad16x16[1],
-                       eight_sad8x8[1],
                        sub_sad);
 
             EXPECT_EQ(
@@ -820,11 +815,6 @@ class Allsad8x8_CalculationTest
                 memcmp(
                     best_mv16x16[0], best_mv16x16[1], sizeof(best_mv16x16[0])))
                 << "compare best_mv16x16 error sub_sad " << sub_sad;
-            EXPECT_EQ(
-                0,
-                memcmp(
-                    eight_sad8x8[0], eight_sad8x8[1], sizeof(eight_sad8x8[0])))
-                << "compare eight_sad8x8 error sub_sad " << sub_sad;
             EXPECT_EQ(0,
                       memcmp(eight_sad16x16[0],
                              eight_sad16x16[1],

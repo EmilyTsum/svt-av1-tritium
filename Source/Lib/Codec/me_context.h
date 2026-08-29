@@ -384,7 +384,6 @@ typedef struct MeContext {
     uint16_t*          p_eight_pos_sad16x16;
     uint32_t           p_eight_sad32x32[4][8];
     uint32_t           p_eight_sad16x16[16][8];
-    uint32_t           p_eight_sad8x8[64][8];
     uint8_t            hme_search_method;
     uint8_t            me_search_method;
     bool               enable_hme_flag;

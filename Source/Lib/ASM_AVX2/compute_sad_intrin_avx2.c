@@ -4212,7 +4212,7 @@ void svt_aom_sad128x128x4d_avx2(const uint8_t* src, int src_stride, const uint8_
 void svt_ext_all_sad_calculation_8x8_16x16_avx2(uint8_t* src, uint32_t src_stride, uint8_t* ref, uint32_t ref_stride,
                                                 uint32_t mv, uint32_t* p_best_sad_8x8, uint32_t* p_best_sad_16x16,
                                                 uint32_t* p_best_mv8x8, uint32_t* p_best_mv16x16,
-                                                uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8],
+                                                uint32_t p_eight_sad16x16[16][8],
                                                 bool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
 
@@ -4267,8 +4267,7 @@ void svt_ext_all_sad_calculation_8x8_16x16_avx2(uint8_t* src, uint32_t src_strid
                 }
             }
 
-            (void)p_eight_sad8x8;
-            const __m128i sad0 = _mm256_castsi256_si128(sad02);
+                    const __m128i sad0 = _mm256_castsi256_si128(sad02);
             const __m128i sad1 = _mm256_castsi256_si128(sad13);
             const __m128i sad2 = _mm256_extracti128_si256(sad02, 1);
             const __m128i sad3 = _mm256_extracti128_si256(sad13, 1);
