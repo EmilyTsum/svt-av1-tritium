@@ -218,6 +218,62 @@ void svt_memcpy_intrin_sse(void* dst_ptr, void const* src_ptr, size_t size) {
     unsigned char*       dst = dst_ptr;
     size_t               i   = 0;
 
+    // The overwhelmingly common encoder-side copies are tiny fixed sizes.
+    // Handle them without entering the generic counted loop.  Keep these as
+    // unaligned integer/SIMD accesses because callers do not guarantee
+    // alignment and memcpy semantics do not require it.
+    switch (size) {
+    case 2: {
+        uint16_t v;
+        __builtin_memcpy(&v, src, sizeof(v));
+        __builtin_memcpy(dst, &v, sizeof(v));
+        return;
+    }
+    case 4: {
+        uint32_t v;
+        __builtin_memcpy(&v, src, sizeof(v));
+        __builtin_memcpy(dst, &v, sizeof(v));
+        return;
+    }
+    case 5: {
+        uint32_t v;
+        __builtin_memcpy(&v, src, sizeof(v));
+        __builtin_memcpy(dst, &v, sizeof(v));
+        dst[4] = src[4];
+        return;
+    }
+    case 6: {
+        uint32_t v32;
+        uint16_t v16;
+        __builtin_memcpy(&v32, src, sizeof(v32));
+        __builtin_memcpy(&v16, src + 4, sizeof(v16));
+        __builtin_memcpy(dst, &v32, sizeof(v32));
+        __builtin_memcpy(dst + 4, &v16, sizeof(v16));
+        return;
+    }
+    case 8: {
+        uint64_t v;
+        __builtin_memcpy(&v, src, sizeof(v));
+        __builtin_memcpy(dst, &v, sizeof(v));
+        return;
+    }
+    case 16:
+        _mm_storeu_si128((__m128i*)dst, _mm_loadu_si128((const __m128i*)src));
+        return;
+    case 32:
+        _mm_storeu_si128((__m128i*)dst, _mm_loadu_si128((const __m128i*)src));
+        _mm_storeu_si128((__m128i*)(dst + 16), _mm_loadu_si128((const __m128i*)(src + 16)));
+        return;
+    case 64:
+        _mm_storeu_si128((__m128i*)dst, _mm_loadu_si128((const __m128i*)src));
+        _mm_storeu_si128((__m128i*)(dst + 16), _mm_loadu_si128((const __m128i*)(src + 16)));
+        _mm_storeu_si128((__m128i*)(dst + 32), _mm_loadu_si128((const __m128i*)(src + 32)));
+        _mm_storeu_si128((__m128i*)(dst + 48), _mm_loadu_si128((const __m128i*)(src + 48)));
+        return;
+    default:
+        break;
+    }
+
 #ifdef _INTEL_COMPILER
 #pragma unroll
 #endif

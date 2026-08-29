@@ -216,6 +216,27 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MemTestLBD);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MemTestHBD);
 
 #if ARCH_X86_64
+TEST(MemcpyIntrinSseTest, MatchesMemcpyForTinyAndFallbackSizes) {
+    alignas(32) uint8_t src[160];
+    alignas(32) uint8_t expected[160];
+    alignas(32) uint8_t actual[160];
+    for (size_t i = 0; i < sizeof(src); ++i) src[i] = static_cast<uint8_t>((i * 37u + 11u) & 0xffu);
+
+    static const size_t sizes[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 15, 16, 17, 31, 32, 33, 63, 64, 65};
+    for (size_t src_offset = 0; src_offset < 4; ++src_offset) {
+        for (size_t dst_offset = 0; dst_offset < 4; ++dst_offset) {
+            for (const size_t size : sizes) {
+                memset(expected, 0xa5, sizeof(expected));
+                memset(actual, 0xa5, sizeof(actual));
+                memcpy(expected + dst_offset, src + src_offset, size);
+                svt_memcpy_intrin_sse(actual + dst_offset, src + src_offset, size);
+                EXPECT_EQ(0, memcmp(expected, actual, sizeof(actual)))
+                    << "size=" << size << " src_offset=" << src_offset << " dst_offset=" << dst_offset;
+            }
+        }
+    }
+}
+
 INSTANTIATE_TEST_SUITE_P(
     AVX2, MemTestLBD,
     ::testing::Combine(::testing::ValuesIn(MemCopyTestParams),
