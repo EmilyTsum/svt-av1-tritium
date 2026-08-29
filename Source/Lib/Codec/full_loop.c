@@ -1664,9 +1664,7 @@ uint8_t svt_aom_quantize_inv_quantize(PictureControlSet* pcs, ModeDecisionContex
         }
     }
     if (perform_rdoq && *eob != 0) {
-        int width    = tx_size_wide[txsize];
-        int height   = tx_size_high[txsize];
-        int eob_perc = (*eob) * 100 / (width * height);
+        const int eob_perc = ((*eob) * 100) >> (tx_size_wide_log2[txsize] + tx_size_high_log2[txsize]);
         if (eob_perc >= ctx->rdoq_ctrls.eob_th) {
             perform_rdoq = 0;
         }
