@@ -2192,6 +2192,11 @@ void svt_ext_all_sad_calculation_8x8_16x16_avx2(uint8_t* src, uint32_t src_strid
     uint32_t* p_best_mv8x8, uint32_t* p_best_mv16x16,
     uint32_t p_eight_sad16x16[16][8],
     bool sub_sad);
+void svt_ext_all_sad_calculation_8x8_16x16_32x32_64x64_avx2(
+    uint8_t* src, uint32_t src_stride, uint8_t* ref, uint32_t ref_stride, uint32_t mv,
+    uint32_t* p_best_sad_8x8, uint32_t* p_best_sad_16x16, uint32_t* p_best_mv8x8,
+    uint32_t* p_best_mv16x16, uint32_t* p_best_sad_32x32, uint32_t* p_best_sad_64x64,
+    uint32_t* p_best_mv32x32, uint32_t* p_best_mv64x64, uint32_t p_sad32x32[4][8], bool sub_sad);
 void svt_ext_all_sad_calculation_8x8_16x16_sse4_1(uint8_t* src, uint32_t src_stride, uint8_t* ref,
     uint32_t ref_stride, uint32_t mv,
     uint32_t* p_best_sad_8x8, uint32_t* p_best_sad_16x16,
