@@ -364,14 +364,7 @@ uint64_t svt_av1_cost_coeffs_txb(ModeDecisionContext* ctx, uint8_t allow_update_
     const TxSize  txs_ctx  = get_txsize_entropy_ctx(transform_size);
     const TxClass tx_class = tx_type_to_class[transform_type];
     int32_t       cost;
-    const int32_t bwl    = get_txb_bwl(transform_size);
-    const int32_t width  = get_txb_wide(transform_size);
-    const int32_t height = get_txb_high(transform_size);
-
-    const ScanOrder* const scan_order     = get_scan_order(transform_size, transform_type);
-    const int16_t* const   scan           = scan_order->scan;
-    uint8_t* const         levels         = set_levels(ctx->md_levels_buf, width, height);
-    int8_t* const          coeff_contexts = ctx->md_coeff_contexts;
+    int8_t* const coeff_contexts = ctx->md_coeff_contexts;
     assert(txs_ctx < TX_SIZES);
     const LvMapCoeffCost* const coeff_costs = &ctx->md_rate_est_ctx->coeff_fac_bits[txs_ctx][plane_type];
 
@@ -385,12 +378,6 @@ uint64_t svt_av1_cost_coeffs_txb(ModeDecisionContext* ctx, uint8_t allow_update_
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], eob == 0, 2);
     }
 
-    if (eob > 1) {
-        svt_av1_txb_init_levels(qcoeff,
-                                width,
-                                height,
-                                levels); // NM - Needs to be optimized - to be combined with the quantisation.
-    }
     const bool is_inter = is_inter_mode(cand_bf->cand->block_mi.mode);
     // Transform type bit estimation
     cost += plane_type > PLANE_TYPE_Y ? 0
@@ -408,6 +395,27 @@ uint64_t svt_av1_cost_coeffs_txb(ModeDecisionContext* ctx, uint8_t allow_update_
     if (allow_update_cdf) {
         update_eob_context(eob, transform_size, tx_class, plane_type, ec_ctx);
     }
+
+    // A single coded coefficient is always the DC coefficient with context 0.
+    // Avoid scan/level setup entirely for the common non-CDF-update fast path.
+    if (eob == 1 && !allow_update_cdf) {
+        coeff_contexts[0] = 0;
+        return cost + av1_cost_coeffs_txb_loop_cost_one_eob(qcoeff, coeff_contexts, coeff_costs, dc_sign_ctx);
+    }
+
+    const int32_t bwl    = get_txb_bwl(transform_size);
+    const int32_t width  = get_txb_wide(transform_size);
+    const int32_t height = get_txb_high(transform_size);
+    const ScanOrder* const scan_order = get_scan_order(transform_size, transform_type);
+    const int16_t* const   scan       = scan_order->scan;
+    uint8_t* const         levels     = set_levels(ctx->md_levels_buf, width, height);
+    if (eob > 1) {
+        svt_av1_txb_init_levels(qcoeff,
+                                width,
+                                height,
+                                levels); // NM - Needs to be optimized - to be combined with the quantisation.
+    }
+
     // Transform non-zero coeff bit estimation
     if (eob == 1) {
         coeff_contexts[0] = 0;
