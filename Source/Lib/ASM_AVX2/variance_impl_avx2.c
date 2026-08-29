@@ -82,6 +82,17 @@ DECLARE_ALIGNED(32, static const uint8_t, bilinear_filters_avx2[512]) = {
     sse_reg = _mm256_add_epi32(sse_reg, exp_src_lo);        \
     sse_reg = _mm256_add_epi32(sse_reg, exp_src_hi);
 
+#define CALC_SUM_SSE_FROM_BYTES(src_bytes)                                                        \
+    /* Form signed source-destination differences directly from interleaved bytes. */             \
+    exp_src_lo = _mm256_maddubs_epi16(_mm256_unpacklo_epi8(src_bytes, dst_reg), adj_sub);          \
+    exp_src_hi = _mm256_maddubs_epi16(_mm256_unpackhi_epi8(src_bytes, dst_reg), adj_sub);          \
+    sum_reg    = _mm256_add_epi16(sum_reg, exp_src_lo);                                            \
+    sum_reg    = _mm256_add_epi16(sum_reg, exp_src_hi);                                            \
+    exp_src_lo = _mm256_madd_epi16(exp_src_lo, exp_src_lo);                                        \
+    exp_src_hi = _mm256_madd_epi16(exp_src_hi, exp_src_hi);                                        \
+    sse_reg    = _mm256_add_epi32(sse_reg, exp_src_lo);                                            \
+    sse_reg    = _mm256_add_epi32(sse_reg, exp_src_hi);
+
 // final calculation to sum and sse
 #define CALC_SUM_AND_SSE                                                \
     res_cmp    = _mm256_cmpgt_epi16(zero_reg, sum_reg);                 \
@@ -181,12 +192,11 @@ unsigned int svt_aom_sub_pixel_variance32xh_avx2(const uint8_t* src, int src_str
             // x_offset = 0 and y_offset = 4
         } else if (y_offset == 4) {
             __m256i src_next_reg;
+            const __m256i adj_sub = _mm256_set1_epi16((int16_t)0xff01); // (1, -1) byte multipliers
             for (i = 0; i < height; i++) {
                 LOAD_SRC_DST
                 AVG_NEXT_SRC(src_reg, src_stride)
-                // expend each byte to 2 bytes
-                MERGE_WITH_SRC(src_reg, zero_reg)
-                CALC_SUM_SSE_INSIDE_LOOP
+                CALC_SUM_SSE_FROM_BYTES(src_reg)
                 src += src_stride;
                 dst += dst_stride;
             }
@@ -210,18 +220,18 @@ unsigned int svt_aom_sub_pixel_variance32xh_avx2(const uint8_t* src, int src_str
     } else if (x_offset == 4) {
         if (y_offset == 0) {
             __m256i src_next_reg;
+            const __m256i adj_sub = _mm256_set1_epi16((int16_t)0xff01); // (1, -1) byte multipliers
             for (i = 0; i < height; i++) {
                 LOAD_SRC_DST
                 AVG_NEXT_SRC(src_reg, 1)
-                // expand each byte to 2 bytes
-                MERGE_WITH_SRC(src_reg, zero_reg)
-                CALC_SUM_SSE_INSIDE_LOOP
+                CALC_SUM_SSE_FROM_BYTES(src_reg)
                 src += src_stride;
                 dst += dst_stride;
             }
             // x_offset = 4  and y_offset = 4
         } else if (y_offset == 4) {
             __m256i src_next_reg, src_avg;
+            const __m256i adj_sub = _mm256_set1_epi16((int16_t)0xff01); // (1, -1) byte multipliers
             // load source and another source starting from the next
             // following byte
             src_reg = _mm256_loadu_si256((__m256i const*)(src));
@@ -233,10 +243,8 @@ unsigned int svt_aom_sub_pixel_variance32xh_avx2(const uint8_t* src, int src_str
                 AVG_NEXT_SRC(src_reg, 1)
                 // average between previous average to current average
                 src_avg = _mm256_avg_epu8(src_avg, src_reg);
-                // expand each byte to 2 bytes
-                MERGE_WITH_SRC(src_avg, zero_reg)
                 // save current source average
-                CALC_SUM_SSE_INSIDE_LOOP
+                CALC_SUM_SSE_FROM_BYTES(src_avg)
                 dst += dst_stride;
             }
             // x_offset = 4  and y_offset = bilin interpolation
