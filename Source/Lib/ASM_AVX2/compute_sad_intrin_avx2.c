@@ -3380,69 +3380,37 @@ SIMD_INLINE void svt_aom_sad4xhx4d_calc_avx2(const uint8_t* src, int src_stride,
     ref2 = ref[2];
     ref3 = ref[3];
 
-    __m256i mm256_sad0 = _mm256_setzero_si256();
-    __m256i mm256_sad1 = _mm256_setzero_si256();
-    __m256i mm256_sad2 = _mm256_setzero_si256();
-    __m256i mm256_sad3 = _mm256_setzero_si256();
-    __m256i mm256_src;
-    __m256i mm256_ref0;
-    __m256i mm256_ref1;
-    __m256i mm256_ref2;
-    __m256i mm256_ref3;
+    __m128i sad0 = _mm_setzero_si128();
+    __m128i sad1 = _mm_setzero_si128();
+    __m128i sad2 = _mm_setzero_si128();
+    __m128i sad3 = _mm_setzero_si128();
 
     for (y = 0; y < hsteps; y++) {
-        mm256_src = _mm256_setr_epi32(*(uint32_t*)src,
-                                      *(uint32_t*)(src + 1 * src_stride),
-                                      *(uint32_t*)(src + 2 * src_stride),
-                                      *(uint32_t*)(src + 3 * src_stride),
-                                      0,
-                                      0,
-                                      0,
-                                      0);
+        const __m128i src_rows = _mm_setr_epi32(*(uint32_t*)src,
+                                                *(uint32_t*)(src + 1 * src_stride),
+                                                *(uint32_t*)(src + 2 * src_stride),
+                                                *(uint32_t*)(src + 3 * src_stride));
+        const __m128i ref_rows0 = _mm_setr_epi32(*(uint32_t*)ref0,
+                                                 *(uint32_t*)(ref0 + 1 * ref_stride),
+                                                 *(uint32_t*)(ref0 + 2 * ref_stride),
+                                                 *(uint32_t*)(ref0 + 3 * ref_stride));
+        const __m128i ref_rows1 = _mm_setr_epi32(*(uint32_t*)ref1,
+                                                 *(uint32_t*)(ref1 + 1 * ref_stride),
+                                                 *(uint32_t*)(ref1 + 2 * ref_stride),
+                                                 *(uint32_t*)(ref1 + 3 * ref_stride));
+        const __m128i ref_rows2 = _mm_setr_epi32(*(uint32_t*)ref2,
+                                                 *(uint32_t*)(ref2 + 1 * ref_stride),
+                                                 *(uint32_t*)(ref2 + 2 * ref_stride),
+                                                 *(uint32_t*)(ref2 + 3 * ref_stride));
+        const __m128i ref_rows3 = _mm_setr_epi32(*(uint32_t*)ref3,
+                                                 *(uint32_t*)(ref3 + 1 * ref_stride),
+                                                 *(uint32_t*)(ref3 + 2 * ref_stride),
+                                                 *(uint32_t*)(ref3 + 3 * ref_stride));
 
-        mm256_ref0 = _mm256_setr_epi32(*(uint32_t*)ref0,
-                                       *(uint32_t*)(ref0 + 1 * ref_stride),
-                                       *(uint32_t*)(ref0 + 2 * ref_stride),
-                                       *(uint32_t*)(ref0 + 3 * ref_stride),
-                                       0,
-                                       0,
-                                       0,
-                                       0);
-
-        mm256_ref1 = _mm256_setr_epi32(*(uint32_t*)ref1,
-                                       *(uint32_t*)(ref1 + 1 * ref_stride),
-                                       *(uint32_t*)(ref1 + 2 * ref_stride),
-                                       *(uint32_t*)(ref1 + 3 * ref_stride),
-                                       0,
-                                       0,
-                                       0,
-                                       0);
-
-        mm256_ref2 = _mm256_setr_epi32(*(uint32_t*)ref2,
-                                       *(uint32_t*)(ref2 + 1 * ref_stride),
-                                       *(uint32_t*)(ref2 + 2 * ref_stride),
-                                       *(uint32_t*)(ref2 + 3 * ref_stride),
-                                       0,
-                                       0,
-                                       0,
-                                       0);
-
-        mm256_ref3 = _mm256_setr_epi32(*(uint32_t*)ref3,
-                                       *(uint32_t*)(ref3 + 1 * ref_stride),
-                                       *(uint32_t*)(ref3 + 2 * ref_stride),
-                                       *(uint32_t*)(ref3 + 3 * ref_stride),
-                                       0,
-                                       0,
-                                       0,
-                                       0);
-
-        mm256_sad0 = _mm256_add_epi16(mm256_sad0, _mm256_sad_epu8(mm256_src, mm256_ref0));
-
-        mm256_sad1 = _mm256_add_epi16(mm256_sad1, _mm256_sad_epu8(mm256_src, mm256_ref1));
-
-        mm256_sad2 = _mm256_add_epi16(mm256_sad2, _mm256_sad_epu8(mm256_src, mm256_ref2));
-
-        mm256_sad3 = _mm256_add_epi16(mm256_sad3, _mm256_sad_epu8(mm256_src, mm256_ref3));
+        sad0 = _mm_add_epi16(sad0, _mm_sad_epu8(src_rows, ref_rows0));
+        sad1 = _mm_add_epi16(sad1, _mm_sad_epu8(src_rows, ref_rows1));
+        sad2 = _mm_add_epi16(sad2, _mm_sad_epu8(src_rows, ref_rows2));
+        sad3 = _mm_add_epi16(sad3, _mm_sad_epu8(src_rows, ref_rows3));
 
         src += src_stride << 2;
         ref0 += ref_stride << 2;
@@ -3451,10 +3419,10 @@ SIMD_INLINE void svt_aom_sad4xhx4d_calc_avx2(const uint8_t* src, int src_stride,
         ref3 += ref_stride << 2;
     }
 
-    res[0] = _mm256_extract_epi32(mm256_sad0, 0) + _mm256_extract_epi32(mm256_sad0, 2);
-    res[1] = _mm256_extract_epi32(mm256_sad1, 0) + _mm256_extract_epi32(mm256_sad1, 2);
-    res[2] = _mm256_extract_epi32(mm256_sad2, 0) + _mm256_extract_epi32(mm256_sad2, 2);
-    res[3] = _mm256_extract_epi32(mm256_sad3, 0) + _mm256_extract_epi32(mm256_sad3, 2);
+    res[0] = (uint32_t)_mm_cvtsi128_si32(sad0) + (uint32_t)_mm_extract_epi32(sad0, 2);
+    res[1] = (uint32_t)_mm_cvtsi128_si32(sad1) + (uint32_t)_mm_extract_epi32(sad1, 2);
+    res[2] = (uint32_t)_mm_cvtsi128_si32(sad2) + (uint32_t)_mm_extract_epi32(sad2, 2);
+    res[3] = (uint32_t)_mm_cvtsi128_si32(sad3) + (uint32_t)_mm_extract_epi32(sad3, 2);
 }
 
 void svt_aom_sad4x4x4d_avx2(const uint8_t* src, int src_stride, const uint8_t* const ref[4], int ref_stride,
