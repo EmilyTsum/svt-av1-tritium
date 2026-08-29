@@ -3563,22 +3563,31 @@ static INLINE __m256i load_sad8x4_rows_avx2(const uint8_t* src, int stride) {
     return _mm256_setr_m128i(src01, src23);
 }
 
-static INLINE uint32_t sad8x8_one_ref_avx2(__m256i src0, __m256i src1, const uint8_t* ref, int ref_stride) {
-    __m256i sad = _mm256_add_epi32(_mm256_sad_epu8(src0, load_sad8x4_rows_avx2(ref, ref_stride)),
-                                   _mm256_sad_epu8(src1, load_sad8x4_rows_avx2(ref + 4 * ref_stride, ref_stride)));
-    __m128i sum = _mm_add_epi32(_mm256_castsi256_si128(sad), _mm256_extracti128_si256(sad, 1));
-    sum         = _mm_add_epi32(sum, _mm_srli_si128(sum, 8));
-    return (uint32_t)_mm_cvtsi128_si32(sum);
+static INLINE __m128i load_sad8x2_rows_sse2(const uint8_t* src, int stride) {
+    __m128i rows = _mm_loadl_epi64((const __m128i*)src);
+    return _mm_castpd_si128(
+        _mm_loadh_pd(_mm_castsi128_pd(rows), (const double*)(const void*)(src + stride)));
+}
+
+static INLINE uint32_t sad8x8_one_ref_sse2(const __m128i src_rows[4], const uint8_t* ref, int ref_stride) {
+    __m128i sad = _mm_sad_epu8(src_rows[0], load_sad8x2_rows_sse2(ref, ref_stride));
+    sad         = _mm_add_epi64(sad, _mm_sad_epu8(src_rows[1], load_sad8x2_rows_sse2(ref + 2 * ref_stride, ref_stride)));
+    sad         = _mm_add_epi64(sad, _mm_sad_epu8(src_rows[2], load_sad8x2_rows_sse2(ref + 4 * ref_stride, ref_stride)));
+    sad         = _mm_add_epi64(sad, _mm_sad_epu8(src_rows[3], load_sad8x2_rows_sse2(ref + 6 * ref_stride, ref_stride)));
+    sad         = _mm_add_epi64(sad, _mm_srli_si128(sad, 8));
+    return (uint32_t)_mm_cvtsi128_si64(sad);
 }
 
 void svt_aom_sad8x8x4d_avx2(const uint8_t* src, int src_stride, const uint8_t* const ref[4], int ref_stride,
                             uint32_t res[4]) {
-    const __m256i src0 = load_sad8x4_rows_avx2(src, src_stride);
-    const __m256i src1 = load_sad8x4_rows_avx2(src + 4 * src_stride, src_stride);
-    res[0]              = sad8x8_one_ref_avx2(src0, src1, ref[0], ref_stride);
-    res[1]              = sad8x8_one_ref_avx2(src0, src1, ref[1], ref_stride);
-    res[2]              = sad8x8_one_ref_avx2(src0, src1, ref[2], ref_stride);
-    res[3]              = sad8x8_one_ref_avx2(src0, src1, ref[3], ref_stride);
+    const __m128i src_rows[4] = {load_sad8x2_rows_sse2(src, src_stride),
+                                 load_sad8x2_rows_sse2(src + 2 * src_stride, src_stride),
+                                 load_sad8x2_rows_sse2(src + 4 * src_stride, src_stride),
+                                 load_sad8x2_rows_sse2(src + 6 * src_stride, src_stride)};
+    res[0] = sad8x8_one_ref_sse2(src_rows, ref[0], ref_stride);
+    res[1] = sad8x8_one_ref_sse2(src_rows, ref[1], ref_stride);
+    res[2] = sad8x8_one_ref_sse2(src_rows, ref[2], ref_stride);
+    res[3] = sad8x8_one_ref_sse2(src_rows, ref[3], ref_stride);
 }
 
 void svt_aom_sad8x16x4d_avx2(const uint8_t* src, int src_stride, const uint8_t* const ref[4], int ref_stride,
