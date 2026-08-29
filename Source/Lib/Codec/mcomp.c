@@ -201,7 +201,7 @@ static INLINE unsigned int svt_check_better_fast(MacroBlockD* xd, const struct A
         if (var_params->bias_fp && (*best_mv).x % 8 == 0 && (*best_mv).y % 8 == 0) {
             weight = var_params->bias_fp;
         }
-        if ((((uint64_t)cost * weight) / 100) < *besterr) {
+        if ((uint64_t)cost * (uint64_t)weight < (uint64_t)*besterr * 100u) {
             *besterr    = cost;
             *best_mv    = *this_mv;
             *distortion = thismse;
