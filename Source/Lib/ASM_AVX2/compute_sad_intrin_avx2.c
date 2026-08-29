@@ -3525,9 +3525,32 @@ SIMD_INLINE void svt_aom_sad8xhx4d_calc_avx2(const uint8_t* src, int src_stride,
     res[3] = (uint32_t)_mm_cvtsi128_si32(xmm0);
 }
 
+static INLINE uint32_t sad8x4_one_ref_sse2(__m128i src01, __m128i src23, const uint8_t* ref, int ref_stride) {
+    __m128i ref01 = _mm_loadl_epi64((const __m128i*)ref);
+    ref01 = _mm_castpd_si128(
+        _mm_loadh_pd(_mm_castsi128_pd(ref01), (const double*)(const void*)(ref + ref_stride)));
+    __m128i ref23 = _mm_loadl_epi64((const __m128i*)(ref + 2 * ref_stride));
+    ref23 = _mm_castpd_si128(
+        _mm_loadh_pd(_mm_castsi128_pd(ref23), (const double*)(const void*)(ref + 3 * ref_stride)));
+
+    __m128i sad = _mm_add_epi64(_mm_sad_epu8(src01, ref01), _mm_sad_epu8(src23, ref23));
+    sad         = _mm_add_epi32(sad, _mm_srli_si128(sad, 8));
+    return (uint32_t)_mm_cvtsi128_si32(sad);
+}
+
 void svt_aom_sad8x4x4d_avx2(const uint8_t* src, int src_stride, const uint8_t* const ref[4], int ref_stride,
                             uint32_t res[4]) {
-    svt_aom_sad8xhx4d_calc_avx2(src, src_stride, ref, ref_stride, res, 4);
+    __m128i src01 = _mm_loadl_epi64((const __m128i*)src);
+    src01 = _mm_castpd_si128(
+        _mm_loadh_pd(_mm_castsi128_pd(src01), (const double*)(const void*)(src + src_stride)));
+    __m128i src23 = _mm_loadl_epi64((const __m128i*)(src + 2 * src_stride));
+    src23 = _mm_castpd_si128(
+        _mm_loadh_pd(_mm_castsi128_pd(src23), (const double*)(const void*)(src + 3 * src_stride)));
+
+    res[0] = sad8x4_one_ref_sse2(src01, src23, ref[0], ref_stride);
+    res[1] = sad8x4_one_ref_sse2(src01, src23, ref[1], ref_stride);
+    res[2] = sad8x4_one_ref_sse2(src01, src23, ref[2], ref_stride);
+    res[3] = sad8x4_one_ref_sse2(src01, src23, ref[3], ref_stride);
 }
 
 void svt_aom_sad8x8x4d_avx2(const uint8_t* src, int src_stride, const uint8_t* const ref[4], int ref_stride,
