@@ -3900,8 +3900,7 @@ void svt_av1_fwd_txfm2d_32x32_avx2(int16_t* input, int32_t* output, uint32_t str
         fdct32x32_avx2(out_256, buf_256, cfg.cos_bit_col, cfg.stage_range_col);
         av1_round_shift_array_32_avx2(buf_256, out_256, 128, 4);
         transpose_32_avx2(32, out_256, buf_256);
-        fdct32x32_avx2(buf_256, out_256, cfg.cos_bit_row, cfg.stage_range_row);
-        av1_round_shift_array_32_avx2(out_256, buf_256, 128, 0);
+        fdct32x32_avx2(buf_256, buf_256, cfg.cos_bit_row, cfg.stage_range_row);
         transpose_32_avx2(32, buf_256, out_256);
         return;
     }
