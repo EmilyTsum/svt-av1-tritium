@@ -43,13 +43,13 @@ void svt_av1_filter_intra_predictor_sse4_1(uint8_t* dst, ptrdiff_t stride, TxSiz
 
     for (r = 1; r < bh + 1; r += 2) {
         for (c = 1; c < bw + 1; c += 4) {
-            DECLARE_ALIGNED(16, uint8_t, p[8]);
-            svt_memcpy_intrin_sse(p, &buffer[r - 1][c - 1], 5 * sizeof(uint8_t));
-            p[5]                       = buffer[r][c - 1];
-            p[6]                       = buffer[r + 1][c - 1];
-            p[7]                       = 0;
-            const __m128i p_b          = xx_loadl_64(p);
-            const __m128i in           = _mm_unpacklo_epi64(p_b, p_b);
+            uint32_t p32;
+            memcpy(&p32, &buffer[r - 1][c - 1], sizeof(p32));
+            __m128i p_b = _mm_cvtsi32_si128((int)p32);
+            p_b         = _mm_insert_epi8(p_b, buffer[r - 1][c + 3], 4);
+            p_b         = _mm_insert_epi8(p_b, buffer[r][c - 1], 5);
+            p_b         = _mm_insert_epi8(p_b, buffer[r + 1][c - 1], 6);
+            const __m128i in = _mm_unpacklo_epi64(p_b, p_b);
             const __m128i out_01       = _mm_maddubs_epi16(in, f1f0);
             const __m128i out_23       = _mm_maddubs_epi16(in, f3f2);
             const __m128i out_45       = _mm_maddubs_epi16(in, f5f4);
