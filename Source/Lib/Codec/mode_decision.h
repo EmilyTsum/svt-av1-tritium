@@ -206,7 +206,10 @@ MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 int              svt_aom_get_sad_per_bit(int qidx, EbBitDepth is_hbd);
 
 int  svt_av1_allow_palette(int allow_palette, BlockSize bsize);
-bool svt_av1_is_lossless_segment(PictureControlSet* pcs, int8_t segment_id);
+static INLINE bool svt_av1_is_lossless_segment(PictureControlSet* pcs, int8_t segment_id) {
+    const FrameHeader* frm_hdr = &pcs->ppcs->frm_hdr;
+    return pcs->lossless[frm_hdr->segmentation_params.segmentation_enabled ? segment_id : 0];
+}
 uint64_t svt_spatial_full_distortion_daala_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride,
                                                   uint8_t *recon, int32_t recon_offset, uint32_t recon_stride,
                                                   uint32_t area_width, uint32_t area_height, uint32_t bit_depth,

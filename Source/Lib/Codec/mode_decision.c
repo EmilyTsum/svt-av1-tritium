@@ -68,15 +68,6 @@ void calc_target_weighted_pred(PictureControlSet* pcs, ModeDecisionContext* ctx,
 
 #define SUPERRES_INVALID_STATE 0x7fffffff
 
-bool svt_av1_is_lossless_segment(PictureControlSet* pcs, int8_t segment_id) {
-    FrameHeader* frm_hdr = &pcs->ppcs->frm_hdr;
-    if (frm_hdr->segmentation_params.segmentation_enabled) {
-        return pcs->lossless[segment_id];
-    } else {
-        return pcs->lossless[0];
-    }
-}
-
 static bool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
     Mv mv;
     //go to 1/8th if input is 1/4pel
