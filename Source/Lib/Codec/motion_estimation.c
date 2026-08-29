@@ -425,6 +425,28 @@ static void open_loop_me_get_eight_search_point_results_block(
     uint16_t curr_mv_2 = ((uint16_t)x_search_index);
     uint32_t curr_mv   = curr_mv_1 | curr_mv_2;
 
+#ifdef ARCH_X86_64
+    if (svt_ext_all_sad_calculation_8x8_16x16 == svt_ext_all_sad_calculation_8x8_16x16_avx2 &&
+        svt_ext_eight_sad_calculation_32x32_64x64 == svt_ext_eight_sad_calculation_32x32_64x64_avx2) {
+        svt_ext_all_sad_calculation_8x8_16x16_32x32_64x64_avx2(me_ctx->b64_src_ptr,
+                                                               me_ctx->b64_src_stride,
+                                                               ref_ptr,
+                                                               ref_luma_stride,
+                                                               curr_mv,
+                                                               me_ctx->p_best_sad_8x8,
+                                                               me_ctx->p_best_sad_16x16,
+                                                               me_ctx->p_best_mv8x8,
+                                                               me_ctx->p_best_mv16x16,
+                                                               me_ctx->p_best_sad_32x32,
+                                                               me_ctx->p_best_sad_64x64,
+                                                               me_ctx->p_best_mv32x32,
+                                                               me_ctx->p_best_mv64x64,
+                                                               me_ctx->p_eight_sad32x32,
+                                                               sub_sad);
+        return;
+    }
+#endif
+
     svt_ext_all_sad_calculation_8x8_16x16(me_ctx->b64_src_ptr,
                                           me_ctx->b64_src_stride,
                                           ref_ptr,
