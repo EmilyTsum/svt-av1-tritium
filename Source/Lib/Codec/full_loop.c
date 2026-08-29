@@ -917,7 +917,10 @@ static AOM_FORCE_INLINE void update_coeff_simple(int* accu_rate, int si, int eob
     if (qc == 0) {
         *accu_rate += txb_costs->base_cost[coeff_ctx][0];
     } else {
-        const int     dqv      = get_dqv(dequant, ci, iqm_ptr);
+        int dqv = dequant[1];
+        if (iqm_ptr != NULL) {
+            dqv = ((iqm_ptr[ci] * dqv) + (1 << (AOM_QM_BITS - 1))) >> AOM_QM_BITS;
+        }
         const TranLow abs_qc   = abs(qc);
         const TranLow abs_tqc  = abs(tcoeff[ci]);
         const TranLow abs_dqc  = abs(dqcoeff[ci]);
