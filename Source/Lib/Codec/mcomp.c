@@ -41,17 +41,19 @@
 
 static INLINE int svt_mv_err_cost(const Mv* mv, const Mv* ref_mv, const int* mvjcost, const int* const mvcost[2],
                                   int error_per_bit, MV_COST_TYPE mv_cost_type) {
-    const Mv diff     = {{mv->x - ref_mv->x, mv->y - ref_mv->y}};
-    const Mv abs_diff = {{abs(diff.x), abs(diff.y)}};
+    const Mv diff = {{mv->x - ref_mv->x, mv->y - ref_mv->y}};
 
-    switch (mv_cost_type) {
-    case MV_COST_ENTROPY:
+    if (mv_cost_type == MV_COST_ENTROPY) {
         if (mvcost) {
             return (int)ROUND_POWER_OF_TWO_64(
                 (int64_t)svt_mv_cost(&diff, mvjcost, mvcost) * error_per_bit,
                 RDDIV_BITS + AV1_PROB_COST_SHIFT - RD_EPB_SHIFT + PIXEL_TRANSFORM_ERROR_SCALE);
         }
         return 0;
+    }
+
+    const Mv abs_diff = {{abs(diff.x), abs(diff.y)}};
+    switch (mv_cost_type) {
     case MV_COST_L1_LOWRES:
         return (SSE_LAMBDA_LOWRES * (abs_diff.y + abs_diff.x)) >> 3;
     case MV_COST_L1_MIDRES:
