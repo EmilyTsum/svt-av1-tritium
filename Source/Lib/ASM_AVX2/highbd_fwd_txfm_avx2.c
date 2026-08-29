@@ -3953,29 +3953,28 @@ void svt_av1_fwd_txfm2d_64x64_avx2(int16_t* input, int32_t* output, uint32_t str
     __m256i*      out     = (__m256i*)output;
     const int32_t txw_idx = tx_size_wide_log2[TX_64X64] - tx_size_wide_log2[0];
     const int32_t txh_idx = tx_size_high_log2[TX_64X64] - tx_size_high_log2[0];
-    const int8_t* shift   = fwd_txfm_shift_ls[TX_64X64];
 
     switch (tx_type) {
     case IDTX:
         load_buffer_64x64_avx2(input, stride, out);
         fidtx64x64_avx2(out, in);
-        av1_round_shift_array_32_avx2(in, out, 512, -shift[1]);
+        av1_round_shift_array_32_avx2(in, out, 512, 2);
         transpose_8nx8n(out, in, 64, 64);
 
         /*row wise transform*/
         fidtx64x64_avx2(in, out);
-        av1_round_shift_array_32_avx2(out, in, 512, -shift[2]);
+        av1_round_shift_array_32_avx2(out, in, 512, 2);
         transpose_8nx8n(in, out, 64, 64);
         break;
     case DCT_DCT:
         load_buffer_64x64_avx2(input, stride, out);
         fdct64x64_avx2(out, in, fwd_cos_bit_col[txw_idx][txh_idx]);
-        av1_round_shift_array_32_avx2(in, out, 512, -shift[1]);
+        av1_round_shift_array_32_avx2(in, out, 512, 2);
         transpose_8nx8n(out, in, 64, 64);
 
         /*row wise transform*/
         fdct64x64_avx2(in, out, fwd_cos_bit_row[txw_idx][txh_idx]);
-        av1_round_shift_array_32_avx2(out, in, 512, -shift[2]);
+        av1_round_shift_array_32_avx2(out, in, 512, 2);
         transpose_8nx8n(in, out, 64, 64);
         break;
     default:
