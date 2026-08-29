@@ -45,11 +45,7 @@ int  svt_aom_allow_palette(int allow_screen_content_tools, BlockSize bsize);
 int  svt_aom_allow_intrabc(const FrameHeader* frm_hdr, SliceType slice_type);
 
 MvJointType svt_av1_get_mv_joint(const Mv* mv) {
-    if (mv->y == 0) {
-        return mv->x == 0 ? MV_JOINT_ZERO : MV_JOINT_HNZVZ;
-    } else {
-        return mv->x == 0 ? MV_JOINT_HZVNZ : MV_JOINT_HNZVNZ;
-    }
+    return (MvJointType)((mv->x != 0) | ((mv->y != 0) << 1));
 }
 
 static int32_t mv_cost(const Mv* mv, const int32_t* joint_cost, const int32_t* const comp_cost[2]) {
