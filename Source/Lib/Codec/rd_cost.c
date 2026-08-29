@@ -409,12 +409,16 @@ uint64_t svt_av1_cost_coeffs_txb(ModeDecisionContext* ctx, uint8_t allow_update_
         update_eob_context(eob, transform_size, tx_class, plane_type, ec_ctx);
     }
     // Transform non-zero coeff bit estimation
-    svt_av1_get_nz_map_contexts(levels,
-                                scan,
-                                eob,
-                                transform_size,
-                                tx_class,
-                                coeff_contexts); // NM - Assembly version is available in AOM
+    if (eob == 1) {
+        coeff_contexts[0] = 0;
+    } else {
+        svt_av1_get_nz_map_contexts(levels,
+                                    scan,
+                                    eob,
+                                    transform_size,
+                                    tx_class,
+                                    coeff_contexts); // NM - Assembly version is available in AOM
+    }
     assert(eob <= width * height);
     if (allow_update_cdf) {
         for (int c = eob - 1; c >= 0; --c) {
