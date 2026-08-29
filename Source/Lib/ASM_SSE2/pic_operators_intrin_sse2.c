@@ -213,7 +213,7 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t* input, uint32_t input_stride
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__ICC__)
 __attribute__((optimize("unroll-loops")))
 #endif
-void svt_memcpy_intrin_sse(void* dst_ptr, void const* src_ptr, size_t size) {
+void svt_memcpy_intrin_sse_fallback(void* dst_ptr, void const* src_ptr, size_t size) {
     const unsigned char* src = src_ptr;
     unsigned char*       dst = dst_ptr;
     size_t               i   = 0;

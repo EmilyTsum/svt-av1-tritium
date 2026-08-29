@@ -2889,7 +2889,20 @@ void svt_aom_lpf_vertical_6_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimi
 
 void svt_aom_lpf_vertical_8_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
 
-extern void svt_memcpy_intrin_sse (void  *dst_ptr, void  const *src_ptr, size_t size);
+extern void svt_memcpy_intrin_sse_fallback(void *dst_ptr, void const *src_ptr, size_t size);
+
+// Most call sites copy a compile-time constant <= 64 bytes.  Keep that path in
+// the header so Clang/GCC can lower it directly to the best load/store sequence
+// for the translation unit's ISA instead of paying an out-of-line function call.
+static INLINE void svt_memcpy_intrin_sse(void *dst_ptr, void const *src_ptr, size_t size) {
+#if defined(__GNUC__) || defined(__clang__)
+    if (__builtin_constant_p(size) && size <= 64) {
+        __builtin_memcpy(dst_ptr, src_ptr, size);
+        return;
+    }
+#endif
+    svt_memcpy_intrin_sse_fallback(dst_ptr, src_ptr, size);
+}
 
 void svt_aom_hadamard_4x4_sse2(const int16_t *src_diff, ptrdiff_t src_stride, int32_t *coeff);
 #if CONFIG_ENABLE_HIGH_BIT_DEPTH
