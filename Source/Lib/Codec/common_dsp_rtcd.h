@@ -1073,6 +1073,7 @@ RTCD_EXTERN void (*svt_aom_hadamard_32x32)(const int16_t* src_diff, ptrdiff_t sr
 
 void svt_aom_hadamard_8x8_c(const int16_t* src_diff, ptrdiff_t src_stride, int32_t* coeff);
 void svt_aom_hadamard_8x8_sse2(const int16_t* src_diff, ptrdiff_t src_stride, int32_t* coeff);
+void svt_aom_hadamard_8x8_avx2(const int16_t* src_diff, ptrdiff_t src_stride, int32_t* coeff);
 RTCD_EXTERN void (*svt_aom_hadamard_8x8)(const int16_t* src_diff, ptrdiff_t src_stride, int32_t* coeff);
 #if CONFIG_ENABLE_HIGH_BIT_DEPTH
 void svt_aom_highbd_hadamard_8x8_c(const int16_t *src_diff, ptrdiff_t src_stride, int32_t *coeff);

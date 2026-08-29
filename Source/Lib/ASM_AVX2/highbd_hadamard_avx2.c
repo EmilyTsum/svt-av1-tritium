@@ -131,3 +131,9 @@ void svt_aom_highbd_hadamard_8x8_avx2(const int16_t* src_diff, ptrdiff_t src_str
     coeff += 8;
     _mm256_storeu_si256((__m256i*)coeff, src32[7]);
 }
+
+void svt_aom_hadamard_8x8_avx2(const int16_t* src_diff, ptrdiff_t src_stride, int32_t* coeff) {
+    // The 32-bit AVX2 transform preserves the lowbd DC coefficient and coefficient multiset.
+    // Lowbd callers consume the transform through SATD (order-independent) and DC.
+    svt_aom_highbd_hadamard_8x8_avx2(src_diff, src_stride, coeff);
+}
