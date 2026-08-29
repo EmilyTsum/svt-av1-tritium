@@ -11,6 +11,7 @@
 
 #include "picture_operators_sse2.h"
 #include <emmintrin.h>
+#include <string.h>
 #include "definitions.h"
 
 /******************************************************************************************************
@@ -217,6 +218,11 @@ void svt_memcpy_intrin_sse_fallback(void* dst_ptr, void const* src_ptr, size_t s
     const unsigned char* src = src_ptr;
     unsigned char*       dst = dst_ptr;
     size_t               i   = 0;
+
+    if (size >= 128) {
+        memcpy(dst_ptr, src_ptr, size);
+        return;
+    }
 
     // The overwhelmingly common encoder-side copies are tiny fixed sizes.
     // Handle them without entering the generic counted loop.  Keep these as
